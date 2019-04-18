@@ -603,11 +603,11 @@ function! s:uint8(n)
 endfunction
 
 function! s:lshift(a, n)
-  return s:B.lshift(a:a, a:n)
+  return s:B.lshift32(a:a, a:n)
 endfunction
 
 function! s:rshift(a, n)
-  return s:B.rshift(a:a, a:n)
+  return s:B.rshift32(a:a, a:n)
 endfunction
 
 function! s:not(a)
