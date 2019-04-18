@@ -161,7 +161,7 @@ let s:SHA1Context.Corrupted = 0
 "#define SHA1CircularShift(bits,word) \
 "                (((word) << (bits)) | ((word) >> (32-(bits))))
 function s:SHA1CircularShift(bits, word)
-  return s:bitwise_or(s:bitwise_lshift(a:word, a:bits), s:bitwise_rshift(a:word, 32 - a:bits))
+  return s:or(s:lshift(a:word, a:bits), s:rshift(a:word, 32 - a:bits))
 endfunction
 
 "
@@ -244,9 +244,9 @@ function s:SHA1Result(context, Message_Digest)
 
   for i in range(s:SHA1HashSize)
     let a:Message_Digest[i] = s:uint8(
-          \   s:bitwise_rshift(
-          \     a:context.Intermediate_Hash[s:bitwise_rshift(i, 2)],
-          \     8 * (3 - s:bitwise_and(i, 0x03))
+          \   s:rshift(
+          \     a:context.Intermediate_Hash[s:rshift(i, 2)],
+          \     8 * (3 - s:and(i, 0x03))
           \   )
           \ )
   endfor
@@ -299,7 +299,7 @@ function s:SHA1Input(context, message_array)
     if a:context.Corrupted
       break
     endif
-    let a:context.Message_Block[a:context.Message_Block_Index] = s:bitwise_and(x, 0xFF)
+    let a:context.Message_Block[a:context.Message_Block_Index] = s:and(x, 0xFF)
     let a:context.Message_Block_Index += 1
 
     let a:context.Length_Low += 8
@@ -357,14 +357,14 @@ function s:SHA1ProcessMessageBlock(context)
   "  Initialize the first 16 words in the array W
   "
   for t in range(16)
-    let W[t] = s:bitwise_lshift(a:context.Message_Block[t * 4], 24)
-    let W[t] = s:bitwise_or(W[t], s:bitwise_lshift(a:context.Message_Block[t * 4 + 1], 16))
-    let W[t] = s:bitwise_or(W[t], s:bitwise_lshift(a:context.Message_Block[t * 4 + 2], 8))
-    let W[t] = s:bitwise_or(W[t], a:context.Message_Block[t * 4 + 3])
+    let W[t] = s:lshift(a:context.Message_Block[t * 4], 24)
+    let W[t] = s:or(W[t], s:lshift(a:context.Message_Block[t * 4 + 1], 16))
+    let W[t] = s:or(W[t], s:lshift(a:context.Message_Block[t * 4 + 2], 8))
+    let W[t] = s:or(W[t], a:context.Message_Block[t * 4 + 3])
   endfor
 
   for t in range(16, 79)
-    let W[t] = s:SHA1CircularShift(1, s:bitwise_xor(s:bitwise_xor(s:bitwise_xor(W[t-3], W[t-8]), W[t-14]), W[t-16]))
+    let W[t] = s:SHA1CircularShift(1, s:xor(s:xor(s:xor(W[t-3], W[t-8]), W[t-14]), W[t-16]))
   endfor
 
   let A = a:context.Intermediate_Hash[0]
@@ -375,7 +375,7 @@ function s:SHA1ProcessMessageBlock(context)
 
   for t in range(20)
     let temp = s:SHA1CircularShift(5,A) +
-          \ s:bitwise_or(s:bitwise_and(B, C), s:bitwise_and(s:bitwise_not(B), D)) +
+          \ s:or(s:and(B, C), s:and(s:not(B), D)) +
           \ E + W[t] + K[0]
     let E = D
     let D = C
@@ -385,7 +385,7 @@ function s:SHA1ProcessMessageBlock(context)
   endfor
 
   for t in range(20, 39)
-    let temp = s:SHA1CircularShift(5,A) + s:bitwise_xor(s:bitwise_xor(B, C), D) + E + W[t] + K[1]
+    let temp = s:SHA1CircularShift(5,A) + s:xor(s:xor(B, C), D) + E + W[t] + K[1]
     let E = D
     let D = C
     let C = s:SHA1CircularShift(30,B)
@@ -395,7 +395,7 @@ function s:SHA1ProcessMessageBlock(context)
 
   for t in range(40, 59)
     let temp = s:SHA1CircularShift(5,A) +
-          \ s:bitwise_or(s:bitwise_or(s:bitwise_and(B, C), s:bitwise_and(B, D)), s:bitwise_and(C, D)) +
+          \ s:or(s:or(s:and(B, C), s:and(B, D)), s:and(C, D)) +
           \ E + W[t] + K[2]
     let E = D
     let D = C
@@ -406,7 +406,7 @@ function s:SHA1ProcessMessageBlock(context)
 
   for t in range(60, 79)
     let temp = s:SHA1CircularShift(5,A) +
-          \ s:bitwise_xor(s:bitwise_xor(B, C), D) + E + W[t] + K[3]
+          \ s:xor(s:xor(B, C), D) + E + W[t] + K[3]
     let E = D
     let D = C
     let C = s:SHA1CircularShift(30,B)
@@ -480,13 +480,13 @@ function s:SHA1PadMessage(context)
   "
   "  Store the message length as the last 8 octets
   "
-  let a:context.Message_Block[56] = s:uint8(s:bitwise_rshift(a:context.Length_High, 24))
-  let a:context.Message_Block[57] = s:uint8(s:bitwise_rshift(a:context.Length_High, 16))
-  let a:context.Message_Block[58] = s:uint8(s:bitwise_rshift(a:context.Length_High, 8))
+  let a:context.Message_Block[56] = s:uint8(s:rshift(a:context.Length_High, 24))
+  let a:context.Message_Block[57] = s:uint8(s:rshift(a:context.Length_High, 16))
+  let a:context.Message_Block[58] = s:uint8(s:rshift(a:context.Length_High, 8))
   let a:context.Message_Block[59] = s:uint8(a:context.Length_High)
-  let a:context.Message_Block[60] = s:uint8(s:bitwise_rshift(a:context.Length_Low, 24))
-  let a:context.Message_Block[61] = s:uint8(s:bitwise_rshift(a:context.Length_Low, 16))
-  let a:context.Message_Block[62] = s:uint8(s:bitwise_rshift(a:context.Length_Low, 8))
+  let a:context.Message_Block[60] = s:uint8(s:rshift(a:context.Length_Low, 24))
+  let a:context.Message_Block[61] = s:uint8(s:rshift(a:context.Length_Low, 16))
+  let a:context.Message_Block[62] = s:uint8(s:rshift(a:context.Length_Low, 8))
   let a:context.Message_Block[63] = s:uint8(a:context.Length_Low)
 
   call s:SHA1ProcessMessageBlock(a:context)
@@ -598,35 +598,31 @@ function! s:str2bytes(str)
   return map(range(len(a:str)), 'char2nr(a:str[v:val])')
 endfunction
 
-function! s:cmp(a, b)
-  return s:B.compare(a:a, a:b)
-endfunction
-
 function! s:uint8(n)
-  return s:bitwise_and(a:n, 0xFF)
+  return s:B.and(a:n, 0xFF)
 endfunction
 
-function! s:bitwise_lshift(a, n)
+function! s:lshift(a, n)
   return s:B.lshift(a:a, a:n)
 endfunction
 
-function! s:bitwise_rshift(a, n)
+function! s:rshift(a, n)
   return s:B.rshift(a:a, a:n)
 endfunction
 
-function! s:bitwise_not(a)
+function! s:not(a)
   return s:B.invert(a:a)
 endfunction
 
-function! s:bitwise_and(a, b)
+function! s:and(a, b)
   return s:B.and(a:a, a:b)
 endfunction
 
-function! s:bitwise_or(a, b)
+function! s:or(a, b)
   return s:B.or(a:a, a:b)
 endfunction
 
-function! s:bitwise_xor(a, b)
+function! s:xor(a, b)
   return s:B.xor(a:a, a:b)
 endfunction
 
