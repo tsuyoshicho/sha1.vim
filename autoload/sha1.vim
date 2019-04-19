@@ -30,6 +30,13 @@
 " HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
 " MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
 
+scriptencoding utf-8
+
+if exists('g:autoloaded_sha1')
+    finish
+endif
+let g:autoloaded_sha1 = 1
+
 let s:save_cpo = &cpo
 set cpo&vim
 
@@ -234,7 +241,7 @@ function s:SHA1Result(context, Message_Digest)
   if !a:context.Computed
     call s:SHA1PadMessage(a:context)
     for i in range(64)
-      " message may be sensitive, clear it out 
+      " message may be sensitive, clear it out
       let a:context.Message_Block[i] = 0
     endfor
     let a:context.Length_Low = 0      " and clear length
